@@ -23,9 +23,19 @@ pipeline {
         stage('Build Maven Project') {
             steps {
                 dir('Assignment-Maven-Java/maven-java-project') {
-                    sh 'mvn clean test'
+                    sh 'MAVEN_OPTS="-Xms64m -Xmx192m" mvn -B -ntp clean test'
                 }
             }
         }
     }
+
+    post {
+        success {
+            echo 'Build and tests completed successfully!'
+        }
+        failure {
+            echo 'Build failed. Check the console output.'
+        }
+    }
 }
+
