@@ -1,0 +1,122 @@
+---
+- name: Deploy Smart Library application
+  hosts: smart_library
+  become: true
+
+  tasks:
+    - name: Create application directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+      loop:
+        - /opt/smart-library
+        - /opt/smart-library/app
+        - /opt/smart-library/data
+
+    - name: Copy application source files
+      ansible.posix.synchronize:
+        src: "{{ playbook_dir }}/../app/"
+        dest: /opt/smart-library/app/
+        archive: true
+        delete: false
+        rsync_opts:
+          - "--exclude=.venv/"
+          - "--exclude=__pycache__/"
+          - "--exclude=*.pyc"
+          - "--exclude=*.pyo"
+          - "--exclude=*.db"
+          - "--exclude=data/"
+          - "--exclude=.git/"
+      become: false
+
+    - name: Ensure Docker is running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Build Smart Library Docker image
+      community.docker.docker_image:
+        name: smart-library
+        tag: "1.0"
+        source: build
+        build:
+          path: /opt/smart-library/app
+        state: present
+
+    - name: Stop existing Smart Library container if present
+      ansible.builtin.command:
+        cmd: docker rm -f smart-library-app
+      register: remove_container
+      failed_when: false
+      changed_when: remove_container.rc == 0
+
+    - name: Run Smart Library container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - run
+          - -d
+          - --name
+          - smart-library-app
+          - --restart
+          - unless-stopped
+          - -p
+          - 127.0.0.1:5000:5000
+          - -v
+          - /opt/smart-library/data:/data
+          - smart-library:1.0
+      register: container_run
+      changed_when: container_run.rc == 0
+
+    - name: Install Nginx reverse proxy configuration
+      ansible.builtin.copy:
+        src: smart-library-nginx.conf
+        dest: /etc/nginx/sites-available/smart-library
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload Nginx
+
+    - name: Disable default Nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload Nginx
+
+    - name: Enable Smart Library Nginx site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/smart-library
+        dest: /etc/nginx/sites-enabled/smart-library
+        state: link
+      notify: Reload Nginx
+
+    - name: Validate Nginx configuration
+      ansible.builtin.command:
+        cmd: nginx -t
+      changed_when: false
+
+    - name: Ensure Nginx is running
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Check application health
+      ansible.builtin.uri:
+        url: http://127.0.0.1:5000/health
+        status_code: 200
+        return_content: true
+      register: health_check
+      retries: 5
+      delay: 3
+      until: health_check.status == 200
+
+  handlers:
+    - name: Reload Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded

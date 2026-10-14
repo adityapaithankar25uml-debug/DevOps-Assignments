@@ -19,3 +19,66 @@
 
 # Maven build output
 **/target/
+# Smart Library - Python local environment
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+
+# Smart Library - local database and data
+Assignment-Unit-4-Smart-Library/app/data/
+Assignment-Unit-4-Smart-Library/**/*.db
+Assignment-Unit-4-Smart-Library/**/*.db-*
+
+# Smart Library - Terraform sensitive state and plans
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/terraform-state-backup.json
+**/*.tfplan
+**/tfplan
+**/*.plan
+**/*.tfvars
+**/*.tfvars.json
+**/crash.log
+**/crash.*.log
+
+# Smart Library - temporary and backup files
+Assignment-Unit-4-Smart-Library/**/*.backup
+Assignment-Unit-4-Smart-Library/**/*.bak
+
+# SSH keys and credentials
+**/*.pem
+**/*.key
+**/.env
+**/.env.*
+
+# Smart Library local development files
+**/.venv/
+**/__pycache__/
+**/*.py[cod]
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/.env
+**/.env.*
+**/inventory.ini
+**/*.pem
+**/*.key
+
+# Terraform sensitive and generated files
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/*.plan
+**/tfplan
+**/*.tfvars
+**/*.tfvars.json
+**/terraform-state-backup.json
+**/crash.log
+**/crash.*.log
+
+# Temporary and backup files
+**/*.backup
+**/*.bak
+**/*~

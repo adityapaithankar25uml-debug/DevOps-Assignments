@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Library | Management Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">SL</div>
+            <div>
+                <h2>Smart Library</h2>
+                <p>Management Platform</p>
+            </div>
+        </div>
+
+        <nav>
+            <a class="nav-link active" href="/">▦ &nbsp; Dashboard</a>
+            <a class="nav-link" href="#book-list">▤ &nbsp; Book Collection</a>
+            <a class="nav-link" href="#add-book">＋ &nbsp; Add a Book</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="online-dot"></span>
+            Library system online
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">LIBRARY MANAGEMENT</p>
+                <h1>Dashboard</h1>
+            </div>
+            <div class="profile">
+                <div class="avatar">L</div>
+                <div>
+                    <strong>Library Admin</strong>
+                    <small>Administrator</small>
+                </div>
+            </div>
+        </header>
+
+        <section class="welcome">
+            <div>
+                <p class="eyebrow light">YOUR LIBRARY AT A GLANCE</p>
+                <h2>Welcome to your Smart Library</h2>
+                <p>Manage your collection, find books, and keep track of availability.</p>
+            </div>
+            <div class="welcome-icon">▤</div>
+        </section>
+
+        <section class="stats">
+            <article class="stat-card">
+                <div class="stat-icon purple">▤</div>
+                <p>Total Books</p>
+                <h2>{{ total }}</h2>
+                <small>Books in the collection</small>
+            </article>
+            <article class="stat-card">
+                <div class="stat-icon green">✓</div>
+                <p>Available Books</p>
+                <h2>{{ available }}</h2>
+                <small>Ready to borrow</small>
+            </article>
+            <article class="stat-card">
+                <div class="stat-icon orange">↗</div>
+                <p>Borrowed Books</p>
+                <h2>{{ borrowed }}</h2>
+                <small>Currently checked out</small>
+            </article>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="messages">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        <section class="content-grid">
+            <article class="panel book-panel" id="book-list">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Book Collection</h2>
+                        <p>Browse and manage library inventory.</p>
+                    </div>
+                    <span class="count-badge">{{ books|length }} results</span>
+                </div>
+
+                <form class="search-form" action="/" method="get">
+                    <input type="search" name="q" value="{{ search }}"
+                           placeholder="Search by title, author, or category...">
+                    <button type="submit">Search</button>
+                    {% if search %}
+                        <a class="clear-search" href="/">Clear</a>
+                    {% endif %}
+                </form>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>BOOK DETAILS</th>
+                                <th>CATEGORY</th>
+                                <th>STATUS</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for book in books %}
+                            <tr>
+                                <td>
+                                    <div class="book-title">{{ book.title }}</div>
+                                    <div class="book-author">by {{ book.author }}</div>
+                                </td>
+                                <td><span class="category">{{ book.category }}</span></td>
+                                <td>
+                                    <span class="status {{ 'available' if book.status == 'Available' else 'borrowed' }}">
+                                        {{ book.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="post" action="{{ url_for('toggle_status', book_id=book.id) }}">
+                                        <button class="action-button" type="submit">
+                                            {{ 'Borrow' if book.status == 'Available' else 'Return' }}
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="empty">
+                                    No books found. Add a book or change your search.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="panel add-panel" id="add-book">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Add a Book</h2>
+                        <p>Add to your collection.</p>
+                    </div>
+                    <div class="add-icon">＋</div>
+                </div>
+
+                <form class="add-form" action="/add" method="post">
+                    <label for="title">Book Title</label>
+                    <input id="title" name="title" required maxlength="200"
+                           placeholder="e.g. Introduction to AI">
+
+                    <label for="author">Author</label>
+                    <input id="author" name="author" required maxlength="150"
+                           placeholder="Enter author name">
+
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        <option>Technology</option>
+                        <option>Fiction</option>
+                        <option>Science</option>
+                        <option>Education</option>
+                        <option>Self-Help</option>
+                        <option>History</option>
+                        <option>Other</option>
+                    </select>
+
+                    <button class="primary-button" type="submit">＋ Add Book to Library</button>
+                </form>
+
+                <div class="tip">
+                    <strong>Library tip</strong>
+                    <p>Update a book's status whenever it is borrowed or returned to keep your inventory accurate.</p>
+                </div>
+            </article>
+        </section>
+
+        <footer>Smart Library Management Platform · Flask · SQLite</footer>
+    </main>
+</body>
+</html>
